@@ -1,0 +1,74 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --sp-black: #080b12;
+    --sp-white: #ffffff;
+    --sp-navy: #101c35;
+    --sp-blue: #2563eb;
+    --sp-blue-light: #60a5fa;
+    --font-display: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+    --font-sans: "DM Sans", system-ui, -apple-system, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  }
+
+  html {
+    font-family: var(--font-sans);
+    scroll-behavior: smooth;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  .font-mono,
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.sp-hero-gradient {
+  background: radial-gradient(
+      900px 420px at 85% -10%,
+      rgba(37, 99, 235, 0.14),
+      transparent 65%
+    ),
+    radial-gradient(
+      700px 360px at 10% 10%,
+      rgba(96, 165, 250, 0.1),
+      transparent 60%
+    );
+}
+
+.dark .sp-hero-gradient {
+  background: radial-gradient(
+      900px 420px at 85% -10%,
+      rgba(37, 99, 235, 0.24),
+      transparent 65%
+    ),
+    radial-gradient(
+      700px 360px at 10% 10%,
+      rgba(16, 28, 53, 0.7),
+      transparent 60%
+    );
+}
+
+.sp-blue-glow {
+  box-shadow: 0 12px 32px -12px rgba(37, 99, 235, 0.28);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

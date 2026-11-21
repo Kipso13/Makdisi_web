@@ -1,0 +1,13 @@
+# Horizon school platform — roadmap
+- [x] Database, roles, privacy rules, storage, demo accounts & data
+- [ ] Design system, app shell (sidebar, mobile nav, search, notifications, theme)
+- [ ] Auth: login, register, forgot/reset password, Google
+- [ ] Role dashboards (student / teacher / admin)
+- [ ] Grades (student view + teacher management)
+- [ ] Attendance (student view + staff management)
+- [ ] Messaging (student ↔ teacher, files, realtime)
+- [ ] Community (videos, tips, likes, comments, saves, follows, moderation)
+- [ ] School info center (announcements, dates, timetable, documents)
+- [ ] Admin panel (users, classes, subjects, timetables, announcements, settings, stats)
+- [ ] Profile page with photo
+- [ ] Tests for grade/attendance rules, verification
