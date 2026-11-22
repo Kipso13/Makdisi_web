@@ -22,7 +22,6 @@ interface ReportChatRequestBody {
   studentName?: string;
   className?: string;
   viceRepName?: string;
-  userRole?: string;
 }
 
 function getGeminiClient(): GoogleGenAI | null {
@@ -44,26 +43,29 @@ async function createServer() {
   const app = express();
   app.use(express.json({ limit: "1mb" }));
 
+  // Allow static GitHub Pages builds to reach this backend if VITE_CHAT_API_URL is set
+  app.use((_req, res, next) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    next();
+  });
+
+  app.options("/api/assistant/report-chat", (_req, res) => {
+    res.sendStatus(204);
+  });
+
   app.get("/api/health", (_req: Request, res: Response) => {
     const apiKey = process.env.GEMINI_API_KEY?.trim();
     res.json({
       ok: true,
-      app: "School Plus",
-      school: "Makdisi School",
+      app: "Makdisi School Box Chat",
       aiConfigured: Boolean(apiKey && apiKey !== "MY_GEMINI_API_KEY"),
-      databaseMode: process.env.DATABASE_URL ? "configured" : "demo-placeholder",
     });
   });
 
   app.post("/api/assistant/report-chat", async (req: Request, res: Response) => {
     const body = (req.body || {}) as ReportChatRequestBody;
-
-    if (body.userRole !== "student") {
-      res.status(403).json({
-        error: "Only signed-in students can submit class problems or suggestions.",
-      });
-      return;
-    }
 
     if (!Array.isArray(body.messages) || body.messages.length === 0) {
       res.status(400).json({ error: "Please include at least one message." });
@@ -93,7 +95,7 @@ async function createServer() {
     if (!ai) {
       res.status(503).json({
         error:
-          "AI assistant is not configured yet. Please add GEMINI_API_KEY in Settings > Secrets or your .env file.",
+          "AI assistant is not configured yet. Add GEMINI_API_KEY in Secrets or your .env file, or switch to Guided Intake Mode.",
       });
       return;
     }
@@ -106,15 +108,15 @@ async function createServer() {
       .map((turn) => `${turn.role === "user" ? studentName : "Assistant"}: ${turn.content}`)
       .join("\n");
 
-    const systemInstruction = `You are the School Plus Student Support Assistant at Makdisi School.
+    const systemInstruction = `You are the Makdisi School Student Support Assistant.
 You help a student (${studentName} in class ${className}) explain a school problem, facility issue, academic concern, or constructive suggestion in their own words.
-Once you understand the issue, your goal is to prepare a clear, respectful, actionable summary that will be sent privately to their class Vice Representative (${viceRepName}).
+Once you understand the issue, prepare a clear, respectful, actionable summary that will be sent privately to their class Vice Representative (${viceRepName}).
 
 Guidelines:
 - Keep your tone warm, supportive, concise, and practical (2 to 4 sentences per reply).
-- If the student's initial description is vague or missing key context (such as which classroom/location, which subject/teacher schedule, how often it happens, or what outcome they suggest), ask 1 or 2 focused follow-up questions and set readyToSubmit to false.
-- As soon as you have enough clear context (or if the student already gave clear details in 1-2 turns, or answers your follow-up), set readyToSubmit to true, write a concise 2-3 sentence summary for the Vice Representative, choose an accurate category and urgency, and invite the student to review and click "Send to Vice Representative".
-- Never ask for passwords or sensitive personal information. Do not expose other students' private data.`;
+- If the student's initial description is vague or missing key context (such as classroom/location, subject/schedule, or suggested improvement), ask 1 or 2 focused follow-up questions and set readyToSubmit to false.
+- As soon as you have enough clear context, set readyToSubmit to true, write a concise 2-3 sentence summary for the Vice Representative, choose an accurate category and urgency, and invite the student to review and click "Send to Vice Representative".
+- Never ask for passwords or sensitive personal information.`;
 
     try {
       const response = await ai.models.generateContent({
@@ -126,34 +128,12 @@ Guidelines:
           responseSchema: {
             type: Type.OBJECT,
             properties: {
-              reply: {
-                type: Type.STRING,
-                description:
-                  "Conversational message shown to the student. Either asks 1-2 clarifying questions or confirms the summary is ready to send.",
-              },
-              readyToSubmit: {
-                type: Type.BOOLEAN,
-                description:
-                  "True if there is enough specific detail to send a clear report to the class Vice Representative.",
-              },
-              suggestedTitle: {
-                type: Type.STRING,
-                description: "Short, clear 4-8 word title for the Vice Representative inbox.",
-              },
-              category: {
-                type: Type.STRING,
-                description:
-                  "One of: Academic, Facilities, Schedule, Technology, Wellbeing, Suggestion",
-              },
-              urgency: {
-                type: Type.STRING,
-                description: "One of: Low, Medium, High",
-              },
-              summary: {
-                type: Type.STRING,
-                description:
-                  "A clear 2-3 sentence objective summary written for the class Vice Representative.",
-              },
+              reply: { type: Type.STRING },
+              readyToSubmit: { type: Type.BOOLEAN },
+              suggestedTitle: { type: Type.STRING },
+              category: { type: Type.STRING },
+              urgency: { type: Type.STRING },
+              summary: { type: Type.STRING },
             },
             required: [
               "reply",
@@ -167,8 +147,7 @@ Guidelines:
         },
       });
 
-      const rawText = (response.text || "").trim();
-      const parsed = JSON.parse(rawText) as {
+      const parsed = JSON.parse((response.text || "{}").trim()) as {
         reply?: string;
         readyToSubmit?: boolean;
         suggestedTitle?: string;
@@ -235,11 +214,11 @@ Guidelines:
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`School Plus (Makdisi School) server running at http://localhost:${PORT}`);
+    console.log(`Makdisi School Box Chat server running at http://localhost:${PORT}`);
   });
 }
 
 createServer().catch((err) => {
-  console.error("Failed to start School Plus server:", err);
+  console.error("Failed to start server:", err);
   process.exit(1);
 });
